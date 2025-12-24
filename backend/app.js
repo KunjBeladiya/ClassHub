@@ -23,16 +23,20 @@ app.use(
 
 app.use(cookieParser());
 
+app.set("trust proxy", 1); 
 app.use(session({
   secret: "your-secret-key", // Change this to a strong secret in production
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   cookie: {
     maxAge: 60 * 1000, // session cookie valid for 5 minutes
     httpOnly: true,
-    secure: false, // set true only if using HTTPS
+    secure: true, // set true only if using HTTPS
+    sameSite: "none"
   }
 }));
+
+
 
 app.use(passport.initialize());
 app.use(passport.session());
