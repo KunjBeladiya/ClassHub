@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const nodemailer = require("nodemailer");
 const prisma = require("../config/db.js");
+const Sib = require("@sendinblue/client");
 
 const register = async (req, res) => {
   const { email, password, username } = req.body;
@@ -102,15 +103,11 @@ console.log("check user runniing...")
   }
 };
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.USER,
-    pass: process.env.APP_PASSWORD,
-  },
-});
+const client = new Sib.TransactionalEmailsApi();
+client.setApiKey(
+  Sib.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
 
 // Function to generate a 6-digit OTP
 function generateOTP() {
@@ -119,18 +116,17 @@ function generateOTP() {
 
 // Send OTP Email
 async function sendOTPEmail(userEmail, otp) {
-  const mailOptions = {
-    from: process.env.USER,
-    to: userEmail,
-    subject: "Your OTP Code for Verification",
-    text: `Your OTP code is ${otp}. It will expire in 5 minutes.`,
-  };
-
   try {
-    await transporter.sendMail(mailOptions);
-    console.log("OTP sent to email:", userEmail);
-  } catch (error) {
-    console.error("Error sending OTP email:", error);
+    await client.sendTransacEmail({
+      sender: { name: "Your App", email: process.env.BREVO_SENDER_EMAIL },
+      to: [{ email: userEmail }],
+      subject: "Your OTP Code",
+      textContent: `Your OTP code is ${otp}.`,
+    });
+
+    console.log("OTP sent to:", userEmail);
+  } catch (err) {
+    console.error("Email failed:", err?.response?.body || err);
   }
 }
 
