@@ -83,6 +83,8 @@ const login = async (req, res) => {
 };
 
 const checkExistingUser = async (req, res) => {
+console.log("check user runniing...")
+
   const { email } = req.body;
 
   try {
