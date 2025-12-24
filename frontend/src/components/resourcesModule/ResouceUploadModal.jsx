@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { X, Upload, AlertCircle } from "lucide-react";
 
+const API = import.meta.env.VITE_API_URL;
+
 export const ResourceUploadModal = ({ categories, onClose, onUpload }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -45,7 +47,7 @@ export const ResourceUploadModal = ({ categories, onClose, onUpload }) => {
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:5000/api/v1/resources", {
+      const response = await fetch(`${API}/api/v1/resources`, {
         method: "POST",
         body: formData,
         credentials: "include",

@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext"
 
+const API = import.meta.env.VITE_API_URL;
+
 const LoginPage = () => {
   const navigate = useNavigate();
   const {setIsLoggedIn , setUserId , setRole} = useAuth();
@@ -38,7 +40,7 @@ const LoginPage = () => {
 
   const loginUser = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/v1/login", {
+      const response = await fetch(`${API}/api/v1/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

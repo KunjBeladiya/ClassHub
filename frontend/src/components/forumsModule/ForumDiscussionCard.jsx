@@ -1,35 +1,21 @@
+"use client";
+
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const ForumDiscussionCard = ({ forum , onDelete}) => {
+// ✅ Use environment variable for API
+const API = import.meta.env.VITE_API_URL;
+
+export const ForumDiscussionCard = ({ forum, onDelete }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { isLoggedIn, role, loading: authLoading } = useAuth();
 
   const timeAgo = formatDistanceToNow(new Date(forum.created_at), {
     addSuffix: true,
   });
-
-  // const [likeCount, setLikeCount] = useState(0);
-
-  // const fetchLikeCount = async (id) => {
-  //   try {
-  //     const response = await fetch(
-  //       `http://localhost:5000/api/v1/forum/like-count?topic_id=${id}`,
-  //       {
-  //         credentials: "include",
-  //       }
-  //     );
-  //     const data = await response.json();
-  //     if (data.success) {
-  //       setLikeCount(data.likeCount);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
 
   function getPlainTextFromHTML(htmlString) {
     const parser = new DOMParser();
@@ -43,30 +29,27 @@ export const ForumDiscussionCard = ({ forum , onDelete}) => {
   }
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this event?")) return;
+    if (!confirm("Are you sure you want to delete this forum post?")) return;
 
     setIsDeleting(true);
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/v1/forum/delete/${forum.id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${API}/api/v1/forum/delete/${forum.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
       const data = await res.json();
 
       if (data.success) {
-        alert("Event deleted successfully!");
+        alert("Forum post deleted successfully!");
         if (onDelete) onDelete(); 
       } else {
-        alert(data.message || "Failed to delete event");
+        alert(data.message || "Failed to delete forum post");
       }
     } catch (error) {
-      console.error("Error deleting event:", error);
-      alert("Something went wrong while deleting the event");
+      console.error("Error deleting forum post:", error);
+      alert("Something went wrong while deleting the forum post");
     } finally {
       setIsDeleting(false);
     }
@@ -78,7 +61,7 @@ export const ForumDiscussionCard = ({ forum , onDelete}) => {
       onClick={() => (window.location.href = `/forum/${forum.id}`)}
     >
       <div className="flex items-start gap-4">
-        {/* Enhanced Avatar */}
+        {/* Avatar */}
         <div className="flex-shrink-0">
           <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-white shadow-md">
             {forum.author.avatar_url ? (
@@ -100,7 +83,6 @@ export const ForumDiscussionCard = ({ forum , onDelete}) => {
         </div>
 
         <div className="flex-1 min-w-0">
-          {/* Enhanced Header */}
           <div className="flex items-start justify-between mb-2">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -127,7 +109,6 @@ export const ForumDiscussionCard = ({ forum , onDelete}) => {
                 </h3>
               </div>
 
-              {/* Enhanced Meta */}
               <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
                 <span className="font-medium text-gray-700">
                   by {forum.author.full_name}
@@ -142,7 +123,6 @@ export const ForumDiscussionCard = ({ forum , onDelete}) => {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Enhanced Engagement Metrics */}
               <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-full text-sm">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -175,27 +155,24 @@ export const ForumDiscussionCard = ({ forum , onDelete}) => {
                 <span className="font-medium">{forum._count.likes || 0}</span>
               </div>
 
-              <div>
-                {!authLoading && isLoggedIn && role === "ADMIN" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete();
-                    }}
-                    disabled={isDeleting}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {isDeleting ? "Deleting..." : "Delete"}
-                  </Button>
-                )}
-              </div>
+              {!authLoading && isLoggedIn && role === "ADMIN" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete();
+                  }}
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
+              )}
             </div>
           </div>
 
-          {/* Description snippet */}
           {forum.description && (
             <p className="text-gray-600 text-sm mt-3 line-clamp-2">
               {getPreviewText(forum.description, 100)}

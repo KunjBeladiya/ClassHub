@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const API = import.meta.env.VITE_API_URL;
+
 const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
   const navigate = useNavigate();
 
@@ -31,11 +33,14 @@ const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
 
   const checkUserExistance = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/v1/checkUser", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        `${API}/api/v1/checkUser`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
 
       const data = await response.json();
 
@@ -52,12 +57,15 @@ const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
 
   const sendOTP = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/v1/sendOTP", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${API}/api/v1/sendOTP`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+          credentials: "include",
+        }
+      );
 
       const data = await response.json();
 
@@ -71,7 +79,7 @@ const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
 
     const validationErrors = validate();
 
@@ -81,7 +89,6 @@ const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
       return;
     }
 
-    // Simulated server check
     const existingUsers = await checkUserExistance();
     if (!existingUsers) {
       setIsLoading(false);
@@ -89,16 +96,18 @@ const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
     }
 
     const otpsent = await sendOTP();
-    if (!otpsent) return;
+    if (!otpsent) {
+      setIsLoading(false);
+      return;
+    }
+
     setShowOTP(true);
     setIsLoading(false);
-
     console.log("Registration successful:", formData);
-    // Proceed to actual API call
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/auth/google"; // Replace with your backend OAuth URL
+    window.location.href = `${API}/auth/google`;
   };
 
   const [focusedFields, setFocusedFields] = useState({
@@ -156,21 +165,6 @@ const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
               >
                 Username
               </label>
-              <div className="absolute inset-y-0 right-3 flex items-center">
-                <svg
-                  className="w-5 h-5 text-gray-400 peer-focus:text-blue-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-              </div>
             </div>
           </div>
 
@@ -200,53 +194,12 @@ const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
               >
                 Email Address
               </label>
-              <div className="absolute inset-y-0 right-3 flex items-center">
-                <svg
-                  className="w-5 h-5 text-gray-400 peer-focus:text-blue-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
             </div>
             {errors.email && (
-              <p className="text-red-600 text-sm flex items-center gap-1">
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {errors.email}
-              </p>
+              <p className="text-red-600 text-sm">{errors.email}</p>
             )}
             {emailExistsError && (
-              <p className="text-red-600 text-sm flex items-center gap-1">
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {emailExistsError}
-              </p>
+              <p className="text-red-600 text-sm">{emailExistsError}</p>
             )}
           </div>
 
@@ -276,38 +229,9 @@ const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
               >
                 Password
               </label>
-              <div className="absolute inset-y-0 right-3 flex items-center">
-                <svg
-                  className="w-5 h-5 text-gray-400 peer-focus:text-blue-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                  />
-                </svg>
-              </div>
             </div>
-
             {errors.password && (
-              <p className="text-red-600 text-sm flex items-center gap-1">
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {errors.password}
-              </p>
+              <p className="text-red-600 text-sm">{errors.password}</p>
             )}
           </div>
 
@@ -315,35 +239,33 @@ const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
             type="submit"
             disabled={isLoading}
             className={`flex justify-center w-full text-white py-3.5 rounded-lg font-semibold transition-all duration-300 transform shadow-lg
-    ${
-      isLoading
-        ? "bg-gray-400 cursor-not-allowed"
-        : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:-translate-y-0.5 hover:shadow-blue-200"
-    }`}
+            ${
+              isLoading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:-translate-y-0.5 hover:shadow-blue-200"
+            }`}
           >
             {isLoading ? (
-              <>
-                <svg
-                  className="animate-spin h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
-                  ></path>
-                </svg>
-              </>
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+                ></path>
+              </svg>
             ) : (
               "Sign Up"
             )}
@@ -367,24 +289,6 @@ const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
             onClick={handleGoogleLogin}
             className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 py-3.5 rounded-lg font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-all duration-300"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M23.745 12.27c0-.79-.07-1.54-.19-2.27h-11.3v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"
-              />
-              <path
-                fill="#34A853"
-                d="M12.255 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96h-3.98v3.09C3.515 21.3 7.565 24 12.255 24z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.525 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62h-3.98a11.86 11.86 0 000 10.76l3.98-3.09z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12.255 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C18.205 1.19 15.495 0 12.255 0c-4.69 0-8.74 2.7-10.71 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"
-              />
-            </svg>
             <span>Continue with Google</span>
           </button>
 
@@ -398,7 +302,6 @@ const RegisterPage = ({ setShowOTP, setFormData, formData }) => {
               Log in
             </a>
           </p>
-          
         </form>
       </div>
     </div>

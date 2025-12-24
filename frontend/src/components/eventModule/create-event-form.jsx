@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Calendar, MapPin, Users, Save, ImageIcon } from "lucide-react";
+const API = import.meta.env.REACT_APP_API_URL;
 
 export function CreateEventForm({ event = null, onNavigate }) {
   const isEditing = !!event;
@@ -55,50 +56,50 @@ export function CreateEventForm({ event = null, onNavigate }) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  try {
-    const formDataObj = new FormData();
+    try {
+      const formDataObj = new FormData();
 
-    // Append all fields
-    formDataObj.append("title", formData.title);
-    formDataObj.append("description", formData.description);
-    formDataObj.append("date", formData.date);
-    formDataObj.append("location", formData.location);
-    formDataObj.append("category", formData.category);
-    formDataObj.append("is_virtual", formData.is_virtual);
-    if (formData.max_attendees) {
-      formDataObj.append("max_attendees", formData.max_attendees);
+      formDataObj.append("title", formData.title);
+      formDataObj.append("description", formData.description);
+      formDataObj.append("date", formData.date);
+      formDataObj.append("location", formData.location);
+      formDataObj.append("category", formData.category);
+
+      // Boolean needs string
+      formDataObj.append("is_virtual", String(formData.is_virtual));
+
+      if (formData.max_attendees) {
+        formDataObj.append("max_attendees", formData.max_attendees);
+      }
+
+      if (selectedFile) {
+        formDataObj.append("image", selectedFile);
+      }
+
+      const res = await fetch(`${API}/api/v1/event/create`, {
+        method: "POST",
+        credentials: "include",
+        body: formDataObj,
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Event creation failed:", text);
+        throw new Error("Event creation failed");
+      }
+
+      const data = await res.json();
+      if (data.success) onNavigate("events");
+    } catch (error) {
+      console.error("Error saving event:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    // Append image file if selected
-    if (selectedFile) {
-      formDataObj.append("image", selectedFile);
-    }
-
-    const res = await fetch("http://localhost:5000/api/v1/event/create", {
-      method: "POST",
-      credentials: "include",
-      body: formDataObj, // ✅ no JSON headers
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Event creation failed:", text);
-      throw new Error("Event creation failed");
-    }
-
-    const data = await res.json();
-    if (data.success) onNavigate("events");
-  } catch (error) {
-    console.error("Error saving event:", error);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -163,7 +164,6 @@ const handleSubmit = async (e) => {
             />
           </div>
         </div>
-
       </div>
 
       {/* Date and Time */}

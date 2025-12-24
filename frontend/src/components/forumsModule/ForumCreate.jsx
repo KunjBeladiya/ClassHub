@@ -25,6 +25,7 @@ import { TextEditor } from "./TextEditor";
 // Forum categories
 import {forumCategories} from "../../data/mockData.js"
 
+const API = import.meta.env.VITE_API_URL;
 
 export const ForumCreate = () => {
   const navigate = useNavigate();
@@ -82,7 +83,7 @@ export const ForumCreate = () => {
     
     try {
       const response = await fetch(
-        "http://localhost:5000/api/v1/forum/create",
+        `${API}/api/v1/forum/create`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 
+// ✅ Use env variable for backend API URL
+const API = import.meta.env.VITE_API_URL;
+
 export function EventsPage({ searchParams, onNavigate }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,12 +19,17 @@ export function EventsPage({ searchParams, onNavigate }) {
   useEffect(() => {
     const loadEvents = async () => {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/api/v1/event", {
-        credentials: "include",
-      });
-      const data = await res.json();
-      setEvents(data.events);
-      setLoading(false);
+      try {
+        const res = await fetch(`${API}/api/v1/event`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        setEvents(data.events);
+      } catch (err) {
+        console.error("Failed to load events:", err);
+      } finally {
+        setLoading(false);
+      }
     };
     loadEvents();
   }, [searchParams]);
@@ -29,9 +37,6 @@ export function EventsPage({ searchParams, onNavigate }) {
   const handleFilterChange = (newParams) => {
     onNavigate("events", null, newParams);
   };
-
-  console.log("isLoggedIn:", isLoggedIn);
-  console.log("role:", role);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 mt-12">

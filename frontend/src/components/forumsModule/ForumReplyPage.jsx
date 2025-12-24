@@ -1,144 +1,68 @@
+// src/components/ForumReplyPage.jsx
 import { ForumReplyCard } from "./ForumReplyCard";
 import { ForumReplyForm } from "./ForumReplyForm";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  ThumbsUp,
-  MessageSquare,
-  Bookmark,
-  BookmarkCheck,
-} from "lucide-react";
+import { ArrowLeft, ThumbsUp, MessageSquare, Bookmark } from "lucide-react";
 import { useEffect, useState } from "react";
-// import socket from "../../sockets/socket.js"; // adjust path as needed
 import DOMPurify from "dompurify";
+
+// ✅ Use environment variable for API
+const API = import.meta.env.VITE_API_URL;
 
 export const ForumReplyPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [forumTopic, setForumTopic] = useState({});
   const [forumReply, setForumReply] = useState([]);
-
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-
-  console.log(forumTopic.description);
 
   // Add new reply to state
   const addReply = (reply) => {
     setForumReply((prevReplies) => [...prevReplies, reply]);
   };
 
+  // Check if user liked the topic
   useEffect(() => {
-    const checklike = async () => {
+    const checkLike = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/v1/forum/checklike?topic_id=${id}`,
-          {
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`${API}/api/v1/forum/checklike?topic_id=${id}`, {
+          credentials: "include",
+        });
         const data = await response.json();
-        if (data.success) {
-          setIsLiked(true);
-        }
+        if (data.success) setIsLiked(true);
       } catch (error) {
         console.log(error);
       }
     };
-    checklike();
+    checkLike();
   }, [id]);
 
+  // Fetch like count
   useEffect(() => {
     const fetchLikeCount = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/v1/forum/like-count?topic_id=${id}`,
-          {
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`${API}/api/v1/forum/like-count?topic_id=${id}`, {
+          credentials: "include",
+        });
         const data = await response.json();
-        if (data.success) {
-          setLikeCount(data.likeCount);
-        }
+        if (data.success) setLikeCount(data.likeCount);
       } catch (error) {
         console.log(error);
       }
     };
-
     fetchLikeCount();
   }, [id]);
 
-  // useEffect(() => {
-  //   // Listen for new reply from socket
-  //   socket.on("new_reply", (reply) => {
-  //     console.log("New reply received:", reply);
-  //     addReply(reply);
-  //   });
-
-  //   return () => {
-  //     socket.off("new_reply");
-  //   };
-  // }, []);
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const options = { year: "numeric", month: "short", day: "numeric" };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-
-  const handleLike = async () => {
-    if (!isLiked) {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/api/v1/forum/like",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ topic_id: id }),
-            credentials: "include",
-          }
-        );
-        const data = await response.json();
-        if (data.success) {
-          setLikeCount((count) => count + 1);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    } else {
-      try {
-        const response = await fetch(
-          `http://localhost:5000/api/v1/forum/dislike?topic_id=${id}`,
-          {
-            method: "DELETE",
-            credentials: "include",
-          }
-        );
-        const data = await response.json();
-        if (data.success) {
-          setLikeCount((count) => count - 1);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    setIsLiked(!isLiked);
-  };
-
+  // Fetch forum topic & replies
   const fetchForumData = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/v1/forum/${id}`);
+      const response = await fetch(`${API}/api/v1/forum/${id}`, { credentials: "include" });
       const data = await response.json();
-
       if (data.success) {
-        const { title, description, category, created_at, author, replies } =
-          data.forumDiscussion;
-
+        const { title, description, category, created_at, author, replies } = data.forumDiscussion;
         setForumTopic({ title, description, category, created_at, author });
         setForumReply(replies || []);
-      } else {
-        console.warn("API call succeeded but `success` is false.");
       }
     } catch (error) {
       console.error(error);
@@ -148,6 +72,38 @@ export const ForumReplyPage = () => {
   useEffect(() => {
     fetchForumData();
   }, [id]);
+
+  // Handle like/unlike for topic
+  const handleLike = async () => {
+    try {
+      if (!isLiked) {
+        const response = await fetch(`${API}/api/v1/forum/like`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic_id: id }),
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (data.success) setLikeCount((count) => count + 1);
+      } else {
+        const response = await fetch(`${API}/api/v1/forum/dislike?topic_id=${id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (data.success) setLikeCount((count) => count - 1);
+      }
+      setIsLiked(!isLiked);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen pb-12">
@@ -178,7 +134,7 @@ export const ForumReplyPage = () => {
         <div className="w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all hover:shadow-md duration-300 mb-8">
           <div className="p-6">
             <div className="flex items-start gap-4">
-              {/* Enhanced Avatar */}
+              {/* Avatar */}
               <div className="hidden sm:block flex-shrink-0">
                 <div className="relative">
                   <div className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full w-14 h-14 flex items-center justify-center shadow-sm">
@@ -194,7 +150,6 @@ export const ForumReplyPage = () => {
               </div>
 
               <div className="flex-1 min-w-0">
-                {/* Enhanced Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                   <div className="flex items-center gap-3">
                     <div className="sm:hidden flex-shrink-0">
@@ -217,15 +172,10 @@ export const ForumReplyPage = () => {
                         </span>
                       </div>
                       <div className="text-sm text-gray-500 mt-1 flex items-center flex-wrap">
-                        <span>{forumTopic.author?.major}</span>
-                        <span className="mx-2">•</span>
-                        <span>
-                          Joined {formatDate(forumTopic.author?.created_at)}
-                        </span>
+                        <span>Joined {formatDate(forumTopic.author?.created_at)}</span>
                         <span className="mx-2">•</span>
                         <span className="flex items-center">
-                          <ThumbsUp size={14} className="mr-1" /> {likeCount}{" "}
-                          likes
+                          <ThumbsUp size={14} className="mr-1" /> {likeCount} likes
                         </span>
                       </div>
                     </div>
@@ -239,19 +189,19 @@ export const ForumReplyPage = () => {
                   </div>
                 </div>
 
-                {/* Enhanced Topic Content */}
+                {/* Topic Content */}
                 <div className="prose max-w-none mb-6">
                   {forumTopic.description ? (
                     <div
-                      className="min-h-[200px] bg-white p-4 space-y-2 
-    [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-black 
-    [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-black 
-    [&_p]:text-base 
-    [&_ul]:list-disc [&_ul]:pl-5 
-    [&_ol]:list-decimal [&_ol]:pl-5 
-    [&_li]:mb-1 
-    [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_blockquote]:border-gray-400
-    [&_a]:text-blue-600 [&_a]:underline [&_a]:hover:text-blue-800"
+                      className="min-h-[200px] bg-white p-4 space-y-2
+                      [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-black
+                      [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-black
+                      [&_p]:text-base
+                      [&_ul]:list-disc [&_ul]:pl-5
+                      [&_ol]:list-decimal [&_ol]:pl-5
+                      [&_li]:mb-1
+                      [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_blockquote]:border-gray-400
+                      [&_a]:text-blue-600 [&_a]:underline [&_a]:hover:text-blue-800"
                       dangerouslySetInnerHTML={{
                         __html: DOMPurify.sanitize(forumTopic.description),
                       }}
@@ -261,22 +211,17 @@ export const ForumReplyPage = () => {
                   )}
                 </div>
 
-                {/* Enhanced Action Buttons */}
+                {/* Action Buttons */}
                 <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
                   <div className="flex items-center gap-5">
                     <button
                       onClick={handleLike}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                        isLiked
-                          ? "bg-indigo-50 text-indigo-600"
-                          : "text-gray-500 hover:bg-gray-100"
+                        isLiked ? "bg-indigo-50 text-indigo-600" : "text-gray-500 hover:bg-gray-100"
                       }`}
                       aria-pressed={isLiked}
                     >
-                      <ThumbsUp
-                        size={20}
-                        className={isLiked ? "fill-indigo-500" : ""}
-                      />
+                      <ThumbsUp size={20} className={isLiked ? "fill-indigo-500" : ""} />
                       <span className="font-medium">
                         {isLiked ? "Liked" : "Like"} • {likeCount}
                       </span>
@@ -284,16 +229,9 @@ export const ForumReplyPage = () => {
 
                     <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-all duration-200">
                       <MessageSquare size={20} />
-                      <span className="font-medium">
-                        Reply • {forumReply.length}
-                      </span>
+                      <span className="font-medium">Reply • {forumReply.length}</span>
                     </button>
                   </div>
-
-                  {/* <div className="text-xs text-gray-500">
-                    Updated{" "}
-                    {formatDate(forumTopic.updated_at || forumTopic.created_at)}
-                  </div> */}
                 </div>
               </div>
             </div>
@@ -304,8 +242,7 @@ export const ForumReplyPage = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-bold text-xl sm:text-2xl text-gray-900">
-              Replies{" "}
-              <span className="text-indigo-600">({forumReply.length})</span>
+              Replies <span className="text-indigo-600">({forumReply.length})</span>
             </h2>
             <div className="flex items-center text-sm text-gray-500">
               <span>Sort by:</span>
@@ -322,11 +259,9 @@ export const ForumReplyPage = () => {
                 <ForumReplyCard
                   key={reply.id}
                   reply={reply}
-                  onDelete={() => {
-                    setForumReply((prev) => {
-                      return prev.filter((r) => r.id !== reply.id);
-                    });
-                  }}
+                  onDelete={() =>
+                    setForumReply((prev) => prev.filter((r) => r.id !== reply.id))
+                  }
                 />
               ))
             ) : (
@@ -338,15 +273,14 @@ export const ForumReplyPage = () => {
                   No replies yet
                 </h3>
                 <p className="text-gray-500 max-w-md mx-auto">
-                  Be the first to share your thoughts on this topic. Your reply
-                  could help others in the community!
+                  Be the first to share your thoughts on this topic. Your reply could help others in the community!
                 </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Enhanced Reply Form */}
+        {/* Reply Form */}
         <ForumReplyForm topic_id={id} onNewReply={addReply} />
       </div>
     </div>

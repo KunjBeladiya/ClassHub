@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
+const API = import.meta.env.VITE_API_URL;
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -13,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
   const checkAuth = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/v1/me", {
+      const res = await fetch(`${API}/api/v1/me`, {
         credentials: "include",
       });
 
@@ -44,7 +46,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/v1/logout", {
+      const res = await fetch(`${API}/api/v1/logout`, {
         credentials: "include",
         method: "GET",
       });

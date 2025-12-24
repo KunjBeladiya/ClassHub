@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import socket from "../../sockets/socket.js"; // adjust if needed
 import { TextEditor } from "./TextEditor.jsx";
 
+const API = import.meta.env.VITE_API_URL;
+
 export const ForumReplyForm = ({ topic_id, onNewReply }) => {
   const [replyContent, setReplyContent] = useState("");
 
@@ -23,7 +25,7 @@ export const ForumReplyForm = ({ topic_id, onNewReply }) => {
 
   const postReply = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/v1/forum/reply", {
+      const response = await fetch(`${API}/api/v1/forum/reply`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { CreateEventForm } from "./create-event-form.jsx"
-import { ArrowLeft } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { CreateEventForm } from "./create-event-form.jsx";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function CreateEventPage({ onNavigate }) {
   return (
@@ -17,14 +17,20 @@ export function CreateEventPage({ onNavigate }) {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Events
         </Button>
-        <h1 className="text-3xl font-bold text-gray-900">Create New Event</h1>
-        <p className="text-gray-600 mt-2">Share your event with the campus community</p>
+
+        <h1 className="text-3xl font-bold text-gray-900">
+          Create New Event
+        </h1>
+        <p className="text-gray-600 mt-2">
+          Share your event with the campus community
+        </p>
       </div>
 
       {/* Form */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
+        {/* ✅ Pass onNavigate to the form */}
         <CreateEventForm onNavigate={onNavigate} />
       </div>
     </div>
-  )
+  );
 }

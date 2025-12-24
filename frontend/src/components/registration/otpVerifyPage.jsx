@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
+// ✅ Use environment variable for API
+const API = import.meta.env.VITE_API_URL;
+
 const VerifyOtpPage = ({ onBack, formData }) => {
   const navigate = useNavigate();
   const [otpDigits, setOtpDigits] = useState(["", "", "", ""]);
@@ -13,19 +16,17 @@ const VerifyOtpPage = ({ onBack, formData }) => {
     const timer =
       countdown > 0 &&
       setInterval(() => {
-        setCountdown(countdown - 1);
+        setCountdown((prev) => prev - 1);
       }, 1000);
     return () => clearInterval(timer);
   }, [countdown]);
 
   const handleInputChange = (index, value) => {
     if (/^\d*$/.test(value)) {
-      // Only allow numbers
       const newOtpDigits = [...otpDigits];
-      newOtpDigits[index] = value.slice(-1); // Take last character entered
+      newOtpDigits[index] = value.slice(-1);
       setOtpDigits(newOtpDigits);
 
-      // Auto-focus next input
       if (value && index < 3) {
         inputsRef.current[index + 1].focus();
       }
@@ -40,7 +41,7 @@ const VerifyOtpPage = ({ onBack, formData }) => {
 
   const handleResendOtp = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/v1/sendOTP", {
+      const response = await fetch(`${API}/api/v1/sendOTP`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -51,18 +52,19 @@ const VerifyOtpPage = ({ onBack, formData }) => {
 
       if (data.success) {
         setCountdown(60);
+        setMessage("🎉 OTP sent successfully!");
       } else {
         setMessage("Failed to resend OTP. Please try again.");
       }
     } catch (error) {
       setMessage("Something went wrong. Please try again.");
-      console.log(error);
+      console.error(error);
     }
   };
 
   const registerUser = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/v1/register", {
+      const response = await fetch(`${API}/api/v1/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -71,7 +73,7 @@ const VerifyOtpPage = ({ onBack, formData }) => {
       const data = await response.json();
       console.log(data);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -80,18 +82,16 @@ const VerifyOtpPage = ({ onBack, formData }) => {
     setIsLoading(true);
 
     const otp = otpDigits.join("");
-    console.log(otp);
     try {
-      const response = await fetch("http://localhost:5000/api/v1/verifyOTP", {
+      const response = await fetch(`${API}/api/v1/verifyOTP`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ otp }),
         credentials: "include",
       });
 
       const data = await response.json();
+
       if (data.success) {
         await registerUser();
         setIsLoading(false);
@@ -103,7 +103,7 @@ const VerifyOtpPage = ({ onBack, formData }) => {
     } catch (error) {
       setIsLoading(false);
       setMessage("Something went wrong. Please try again.");
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -140,28 +140,26 @@ const VerifyOtpPage = ({ onBack, formData }) => {
           className="flex justify-center w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {isLoading ? (
-            <>
-              <svg
-                className="animate-spin h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
-                ></path>
-              </svg>
-            </>
+            <svg
+              className="animate-spin h-5 w-5 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+              ></path>
+            </svg>
           ) : (
             "Verify"
           )}

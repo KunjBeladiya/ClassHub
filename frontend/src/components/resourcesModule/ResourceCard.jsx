@@ -13,6 +13,8 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
+const API = import.meta.env.VITE_API_URL;
+
 export const ResourceCard = ({ resource, onDelete }) => {
   const { isLoggedIn, role, loading: authLoading } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -46,7 +48,7 @@ export const ResourceCard = ({ resource, onDelete }) => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/v1/resources/delete/${resource.id}`,
+        `${API}/api/v1/resources/delete/${resource.id}`,
         {
           method: "DELETE",
           credentials: "include",

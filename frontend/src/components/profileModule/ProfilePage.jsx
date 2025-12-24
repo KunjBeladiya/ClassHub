@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 
+// ✅ Use environment variable for API
+const API = import.meta.env.VITE_API_URL;
+
 export const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -26,18 +29,14 @@ export const ProfilePage = () => {
   // Fetch profile
   const fetchProfile = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/v1/user/me", {
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const res = await fetch(`${API}/api/v1/user/me`, {
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
-
       if (!res.ok) throw new Error("Failed to fetch profile");
 
       const data = await res.json();
 
-      // Initialize arrays safely
       setUser({
         ...data.user,
         eventAttendees: data.user.eventAttendees || [],
@@ -70,31 +69,26 @@ export const ProfilePage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handle avatar file selection
+  // Handle avatar selection
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Check if file is an image
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        return;
-      }
+    if (!file) return;
 
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size should be less than 5MB');
-        return;
-      }
-
-      setAvatarFile(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAvatarPreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
     }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB");
+      return;
+    }
+
+    setAvatarFile(file);
+
+    const reader = new FileReader();
+    reader.onload = (e) => setAvatarPreview(e.target.result);
+    reader.readAsDataURL(file);
   };
 
   // Update profile
@@ -103,12 +97,12 @@ export const ProfilePage = () => {
     try {
       let avatarUrl = formData.avatar_url;
 
-      // If a new avatar file is selected, upload it first
+      // Upload new avatar if selected
       if (avatarFile) {
         const uploadFormData = new FormData();
-        uploadFormData.append('avatar', avatarFile);
+        uploadFormData.append("avatar", avatarFile);
 
-        const uploadRes = await fetch("http://localhost:5000/api/v1/user/update", {
+        const uploadRes = await fetch(`${API}/api/v1/user/update`, {
           method: "PUT",
           credentials: "include",
           body: uploadFormData,
@@ -120,17 +114,11 @@ export const ProfilePage = () => {
         avatarUrl = uploadData.avatarUrl;
       }
 
-      // Update profile with the new avatar URL
-      const updateData = {
-        ...formData,
-        avatar_url: avatarUrl
-      };
+      const updateData = { ...formData, avatar_url: avatarUrl };
 
-      const res = await fetch("http://localhost:5000/api/v1/user/update", {
+      const res = await fetch(`${API}/api/v1/user/update`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(updateData),
       });
@@ -139,7 +127,6 @@ export const ProfilePage = () => {
 
       const data = await res.json();
 
-      // Initialize arrays safely
       setUser({
         ...data.user,
         eventAttendees: data.user.eventAttendees || [],
@@ -156,15 +143,13 @@ export const ProfilePage = () => {
     }
   };
 
-  // Handle logout
+  // Logout
   const handleLogout = async () => {
     await logout();
     navigate("/dashboard");
   };
 
-  const handleBackToHome = () => {
-    navigate("/");
-  };
+  const handleBackToHome = () => navigate("/");
 
   if (!user)
     return (
@@ -241,7 +226,7 @@ export const ProfilePage = () => {
           {editing ? (
             <form onSubmit={handleUpdate} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[ 
+                {[
                   { label: "Full Name", name: "full_name", type: "text" },
                   { label: "University", name: "university", type: "text" },
                   { label: "Major", name: "major", type: "text" },

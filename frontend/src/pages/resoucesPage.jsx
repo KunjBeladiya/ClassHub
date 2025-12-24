@@ -6,6 +6,8 @@ import { Footer } from "../components/footer.jsx";
 import { mockCategories } from "../data/mockData.js";
 import { Header } from "../components/header.jsx";
 
+const API = import.meta.env.VITE_API_URL;
+
 export const ResourcesPage = () => {
   const [resources, setResources] = useState([]);
   const [categories] = useState(mockCategories);
@@ -15,7 +17,7 @@ export const ResourcesPage = () => {
 
   const fetchData = async () => {
     try {
-      const resourcesRes = await fetch("http://localhost:5000/api/v1/resources");
+      const resourcesRes = await fetch(`${API}/api/v1/resources`);
       const resourcesData = await resourcesRes.json();
       console.log(resourcesData);
       setResources(resourcesData.resources);

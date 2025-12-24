@@ -5,6 +5,8 @@ import { ForumDiscussionCard } from "../components/forumsModule/ForumDiscussionC
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+const API = import.meta.env.VITE_API_URL;
+
 export const ForumsPage = () => {
   const navigate = useNavigate();
   const [forumDiscussion, setforumDiscussion] = useState([]);
@@ -15,7 +17,7 @@ export const ForumsPage = () => {
   const getForumDiscussion = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://localhost:5000/api/v1/forum", {
+      const response = await fetch(`${API}/api/v1/forum`, {
         credentials: "include",
       });
       const data = await response.json();

@@ -12,41 +12,47 @@ import {
   Clock,
   Globe,
   ArrowLeft,
-  Share2,
-  Heart,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
+
+// ✅ Use env variable for backend API URL
+const API = import.meta.env.VITE_API_URL;
 
 export function EventDetailPage({ eventId, onNavigate }) {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isJoined, setIsJoined] = useState();
+  const [isJoined, setIsJoined] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { isLoggedIn, role, loading: authLoading } = useAuth();
 
   useEffect(() => {
     const loadEvent = async () => {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/v1/event/${eventId}`, {
-        credentials: "include",
-      });
-      const data = await res.json();
-      setEvent(data.event);
 
-      // 2. Load user's registered events to detect joined status
-      const regRes = await fetch(
-        `http://localhost:5000/api/v1/event/me/registered`,
-        { credentials: "include" }
-      );
-      const regData = await regRes.json();
+      try {
+        // Fetch event details
+        const res = await fetch(`${API}/api/v1/event/${eventId}`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        setEvent(data.event);
 
-      const alreadyJoined = regData.events.some(
-        (ev) => ev.event.id === eventId
-      );
-      setIsJoined(alreadyJoined);
-
-      setLoading(false);
+        // Fetch user's registered events to detect join status
+        const regRes = await fetch(`${API}/api/v1/event/me/registered`, {
+          credentials: "include",
+        });
+        const regData = await regRes.json();
+        const alreadyJoined = regData.events.some(
+          (ev) => ev.event.id === eventId
+        );
+        setIsJoined(alreadyJoined);
+      } catch (err) {
+        console.error("Failed to load event:", err);
+      } finally {
+        setLoading(false);
+      }
     };
+
     loadEvent();
   }, [eventId]);
 
@@ -90,18 +96,22 @@ export function EventDetailPage({ eventId, onNavigate }) {
     : null;
 
   const handleJoinEvent = async () => {
-    if (!isJoined) {
-      await fetch(`http://localhost:5000/api/v1/event/${event.id}/join`, {
-        method: "POST",
-        credentials: "include",
-      });
-      setIsJoined(true);
-    } else {
-      await fetch(`http://localhost:5000/api/v1/event/${event.id}/leave`, {
-        method: "POST",
-        credentials: "include",
-      });
-      setIsJoined(false);
+    try {
+      if (!isJoined) {
+        await fetch(`${API}/api/v1/event/${event.id}/join`, {
+          method: "POST",
+          credentials: "include",
+        });
+        setIsJoined(true);
+      } else {
+        await fetch(`${API}/api/v1/event/${event.id}/leave`, {
+          method: "POST",
+          credentials: "include",
+        });
+        setIsJoined(false);
+      }
+    } catch (err) {
+      console.error("Failed to join/leave event:", err);
     }
   };
 
@@ -111,24 +121,20 @@ export function EventDetailPage({ eventId, onNavigate }) {
     setIsDeleting(true);
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/v1/event/delete/${event.id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
-
+      const res = await fetch(`${API}/api/v1/event/delete/${event.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
       const data = await res.json();
 
       if (data.success) {
         alert("Event deleted successfully!");
-        onNavigate("events"); // navigate back to events list
+        onNavigate("events");
       } else {
         alert(data.message || "Failed to delete event");
       }
-    } catch (error) {
-      console.error("Error deleting event:", error);
+    } catch (err) {
+      console.error("Error deleting event:", err);
       alert("Something went wrong while deleting the event");
     } finally {
       setIsDeleting(false);
@@ -152,7 +158,7 @@ export function EventDetailPage({ eventId, onNavigate }) {
         {event.image_url && (
           <div className="h-64 bg-gray-200">
             <img
-              src={event.image_url || "/placeholder.svg"}
+              src={event.image_url}
               alt={event.title}
               className="w-full h-full object-cover"
             />
@@ -162,6 +168,7 @@ export function EventDetailPage({ eventId, onNavigate }) {
         <div className="p-6">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
             <div className="flex-1">
+              {/* Badges */}
               <div className="flex items-center gap-3 mb-4">
                 <Badge variant={isUpcoming ? "default" : "secondary"}>
                   {event.category}
@@ -174,6 +181,7 @@ export function EventDetailPage({ eventId, onNavigate }) {
                 )}
               </div>
 
+              {/* Title & Info */}
               <h1 className="text-3xl font-bold text-gray-900 mb-4">
                 {event.title}
               </h1>
@@ -202,9 +210,7 @@ export function EventDetailPage({ eventId, onNavigate }) {
 
                 <div className="flex items-center gap-2 text-gray-600">
                   <MapPin className="w-5 h-5" />
-                  <span>
-                    {event.is_virtual ? "Virtual Event" : event.location}
-                  </span>
+                  <span>{event.is_virtual ? "Virtual Event" : event.location}</span>
                 </div>
 
                 <div className="flex items-center gap-2 text-gray-600">
@@ -212,9 +218,7 @@ export function EventDetailPage({ eventId, onNavigate }) {
                   <span>
                     {attendeeCount} attending
                     {spotsLeft !== null && (
-                      <span className="text-sm ml-1">
-                        ({spotsLeft} spots left)
-                      </span>
+                      <span className="text-sm ml-1">({spotsLeft} spots left)</span>
                     )}
                   </span>
                 </div>
@@ -230,9 +234,7 @@ export function EventDetailPage({ eventId, onNavigate }) {
               {/* Organizer */}
               <div className="flex items-center gap-3 mb-6">
                 <Avatar className="w-10 h-10">
-                  <AvatarImage
-                    src={event.organizer?.avatar_url || "/placeholder.svg"}
-                  />
+                  <AvatarImage src={event.organizer?.avatar_url} />
                   <AvatarFallback>
                     {event.organizer?.full_name
                       ?.split(" ")
@@ -273,20 +275,18 @@ export function EventDetailPage({ eventId, onNavigate }) {
                 </Button>
               )}
 
-              <div className="flex gap-2">
-                {!authLoading && isLoggedIn && role === "ADMIN" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {isDeleting ? "Deleting..." : "Delete"}
-                  </Button>
-                )}
-              </div>
+              {!authLoading && isLoggedIn && role === "ADMIN" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -294,14 +294,10 @@ export function EventDetailPage({ eventId, onNavigate }) {
 
       {/* Event Description */}
       <div className="bg-white rounded-lg shadow-sm border p-6 mt-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          About This Event
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">About This Event</h2>
         <div className="prose max-w-none text-gray-700">
           {event.description.split("\n").map((paragraph, index) => (
-            <p key={index} className="mb-4 last:mb-0">
-              {paragraph}
-            </p>
+            <p key={index} className="mb-4 last:mb-0">{paragraph}</p>
           ))}
         </div>
       </div>
@@ -316,9 +312,7 @@ export function EventDetailPage({ eventId, onNavigate }) {
             {isJoined && (
               <div className="flex items-center gap-3 bg-blue-50 p-2 rounded">
                 <Avatar className="w-8 h-8">
-                  <AvatarFallback className="text-xs bg-blue-200">
-                    You
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs bg-blue-200">You</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
                   <p className="font-medium text-gray-900 truncate">You</p>
@@ -329,9 +323,7 @@ export function EventDetailPage({ eventId, onNavigate }) {
             {event.attendees.slice(0, 5).map((attendee) => (
               <div key={attendee.user.id} className="flex items-center gap-3">
                 <Avatar className="w-8 h-8">
-                  <AvatarImage
-                    src={attendee.user.avatar_url || "/placeholder.svg"}
-                  />
+                  <AvatarImage src={attendee.user.avatar_url} />
                   <AvatarFallback className="text-xs">
                     {attendee.user.full_name
                       .split(" ")
