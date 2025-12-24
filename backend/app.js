@@ -13,7 +13,10 @@ require("./src/config/passport.js");
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // your React frontend origin
+    origin: [
+      "http://localhost:5173",
+      "https://class-hub-mu.vercel.app"
+    ], // your React frontend origin
     credentials: true,               // allow cookies (sessions) to be sent
   })
 );
