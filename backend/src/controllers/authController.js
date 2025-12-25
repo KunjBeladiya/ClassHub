@@ -62,10 +62,11 @@ const login = async (req, res) => {
 
   // Set cookie
   res.cookie("token", token, {
-    httpOnly: true, // prevents JavaScript access (XSS protection)
-    secure: process.env.NODE_ENV === "production", // only send over HTTPS in production
-    sameSite: "strict", // protects against CSRF
-    maxAge: 60 * 60 * 1000, // 1 hour in ms
+    httpOnly: true,
+    secure: true, // must be true when SameSite = "none"
+    sameSite: "none", // allow cross-site cookies
+    path: "/",
+    maxAge: 60 * 60 * 1000,
   });
 
   const safeUser = {
@@ -79,12 +80,12 @@ const login = async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Login successful",
-    user:safeUser,
+    user: safeUser,
   });
 };
 
 const checkExistingUser = async (req, res) => {
-console.log("check user runniing...")
+  console.log("check user runniing...");
 
   const { email } = req.body;
 
